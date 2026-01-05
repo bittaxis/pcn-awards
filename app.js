@@ -270,18 +270,18 @@ document.getElementById('btnVolverResumen').addEventListener('click', () => {
 });
 
 // ==========================================
-// 6. BOTÓN ENVIAR (CON FUNDIDO FINAL)
+// 6. BOTÓN ENVIAR (REAL FIREBASE + ANIMACIÓN FINAL)
 // ==========================================
 document.getElementById('btnEnviar').addEventListener('click', async () => {
 
     // 1. Validaciones
     if (Object.keys(misVotos).length < TOTAL_PREGUNTAS) return alert("¡Te faltan preguntas por responder!");
-
+    
     const nombreInput = document.getElementById('nombreUsuario');
     const nombreValido = nombreInput.value.trim() || "Anónimo";
-
+    
     if (!nombreInput.value.trim()) {
-        alert("¡Falta tu nombre al inicio para poder celebrar! 🎤");
+        alert("¡Falta tu nombre al inicio! 🎤");
         window.scrollTo({ top: 0, behavior: 'smooth' });
         nombreInput.focus();
         nombreInput.style.borderColor = "red";
@@ -291,105 +291,91 @@ document.getElementById('btnEnviar').addEventListener('click', async () => {
 
     const btn = document.getElementById('btnEnviar');
     const textoOriginalBtn = btn.innerText;
-    btn.innerText = "Sellando votos...";
+    btn.innerText = "Guardando en la nube..."; // Feedback visual
     btn.classList.add('disabled');
 
     try {
-        // --- SIMULACIÓN DE ENVÍO ---
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // ---------------------------------------------------------
+        // PASO CLAVE: ENVÍO REAL A FIREBASE
+        // ---------------------------------------------------------
+        await addDoc(collection(db, "votos"), {
+             nombre: nombreValido,
+             respuestas: misVotos,
+             fecha: serverTimestamp(),
+             navegador: navigator.userAgent
+        });
+        
+        console.log("¡Éxito! Guardado en Firebase."); // Para confirmar en consola
 
-        console.log("Datos listos:", { nombre: nombreValido, respuestas: misVotos });
-
-        // ==============================================
-        // ¡COMIEZA LA CELEBRACIÓN! 🎉
-        // ==============================================
-
+        // ---------------------------------------------------------
+        // INICIO DE LA CELEBRACIÓN (CHAYAS)
+        // ---------------------------------------------------------
         const overlay = document.getElementById('celebrationOverlay');
         const nameSpan = document.getElementById('celebrationName');
         const msgFinalizar = document.getElementById('msgFinalizar');
-
+        
         nameSpan.innerText = nombreValido;
         overlay.classList.add('active');
 
-        // Configuración Confeti (Duración larga)
+        // Confeti (Duración larga)
         let keepRaining = true;
-        const duration = 60 * 1000;
+        const duration = 60 * 1000; 
         const animationEnd = Date.now() + duration;
         const colors = ['#d4af37', '#ffffff', '#FFD700', '#eeeeee'];
 
         (function frame() {
             if (!keepRaining) return;
-
-            confetti({
-                particleCount: 2, angle: 60, spread: 55, origin: { x: 0, y: 0.1 },
-                colors: colors, zIndex: 20001, gravity: 1.2, scalar: 1.2
-            });
-            confetti({
-                particleCount: 2, angle: 120, spread: 55, origin: { x: 1, y: 0.1 },
-                colors: colors, zIndex: 20001, gravity: 1.2, scalar: 1.2
-            });
-
-            if (Date.now() < animationEnd) {
-                requestAnimationFrame(frame);
-            }
+            confetti({ particleCount: 2, angle: 60, spread: 55, origin: { x: 0, y: 0.1 }, colors: colors, zIndex: 20001, gravity: 1.2, scalar: 1.2 });
+            confetti({ particleCount: 2, angle: 120, spread: 55, origin: { x: 1, y: 0.1 }, colors: colors, zIndex: 20001, gravity: 1.2, scalar: 1.2 });
+            if (Date.now() < animationEnd) requestAnimationFrame(frame);
         }());
 
-        // --- LÓGICA DE ESPERA DE CLICK ---
-
+        // ---------------------------------------------------------
+        // ESPERA DE CLICK FINAL (FADE OUT)
+        // ---------------------------------------------------------
         setTimeout(() => {
-            // 1. Mostrar mensaje
             msgFinalizar.classList.add('visible');
 
-            // 2. Definir la función de salida cinematográfica
             const finalizarFn = () => {
-                keepRaining = false;
-
-                // A) FUNDIDO VISUAL (CSS)
+                keepRaining = false; 
+                
+                // A) Fundido visual (Pantalla negra)
                 document.body.classList.add('modo-salida');
-
-                // B) FUNDIDO DE AUDIO (JS)
+                
+                // B) Fundido de audio (Bajar volumen suavemente)
                 const audio = document.getElementById('audioFondo');
                 if (audio && !audio.paused) {
-                    // Bajamos el volumen gradualmente durante 3 segundos
-                    const fadeDuration = 3000;
-                    const originalVolume = audio.volume;
-                    const steps = 30; // Número de pasos para bajar el volumen
-                    const stepTime = fadeDuration / steps;
-                    const volStep = originalVolume / steps;
-
                     const fadeAudioInterval = setInterval(() => {
-                        if (audio.volume > 0.05) { // Margen de seguridad
-                            audio.volume -= volStep;
-                        } else {
-                            audio.volume = 0;
-                            audio.pause();
-                            clearInterval(fadeAudioInterval);
+                        if (audio.volume > 0.05) {
+                             audio.volume -= 0.05;
+                        } else { 
+                            audio.volume = 0; 
+                            audio.pause(); 
+                            clearInterval(fadeAudioInterval); 
                         }
-                    }, stepTime);
+                    }, 100); // Baja el volumen cada 0.1 segundos
                 }
 
-                // C) RECARGAR PÁGINA (Al terminar el fundido de 3s)
+                // C) Recarga final
                 setTimeout(() => {
                     window.scrollTo(0, 0);
                     window.location.reload();
-                }, 3000);
+                }, 3000); // Espera 3 segundos a que termine el fundido
             };
 
-            // Activar escuchador de click (una sola vez)
             document.addEventListener('click', finalizarFn, { once: true });
             document.addEventListener('touchstart', finalizarFn, { once: true });
 
-        }, 4000); // 4 segundos de delay inicial
+        }, 4000); 
 
     } catch (error) {
-        console.error("Error inesperado en simulación:", error);
-        alert("Algo falló. Revisa la consola.");
+        console.error("Error REAL al guardar en Firebase:", error);
+        alert("Ups, hubo un error de conexión. Revisa tu internet o intenta de nuevo.");
         btn.innerText = textoOriginalBtn;
         btn.classList.remove('disabled');
         document.getElementById('celebrationOverlay').classList.remove('active');
     }
 });
-
 
 // ==========================================
 // 6. GENERAR PDF (ESTRATEGIA VENTANA NUEVA)
@@ -529,3 +515,4 @@ document.body.addEventListener('click', () => {
     }
 
 }, { once: true }); // 'once: true' hace que esto solo pase la primera vez
+
