@@ -1,4 +1,4 @@
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
 // --- NUEVO IMPORT DE LAS PREGUNTAS ---
 import { SECCIONES } from './preguntas.js';
@@ -527,4 +527,5 @@ document.body.addEventListener('click', () => {
             console.log("Esperando interacción para reproducir audio...");
         });
     }
+
 }, { once: true }); // 'once: true' hace que esto solo pase la primera vez
