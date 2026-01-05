@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCN Awards | Ceremonia Final</title>
+    <script type="module" src="app.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+
+    <div class="noise-overlay"></div>
+    <div class="fondo-premio-fijo"></div>
+
+    <div id="scrollTrack"></div>
+
+    <div class="stage-fixed">
+
+        <div id="heroLayer" class="layer">
+            <h1 class="main-title">PCN<br><em>Awards</em></h1>
+            <p class="hero-desc">Desliza para comenzar la votación</p>
+            <div class="input-hero">
+                <input type="text" id="nombreUsuario" placeholder="Ingresa tu nombre..." autocomplete="off">
+            </div>
+        </div>
+
+        <div id="timelineLayer" class="layer timeline-container">
+            <div class="linea-dorada"></div>
+            <div id="puntosContainer" class="puntos-wrapper"></div>
+        </div>
+
+        <div id="contentLayer" class="layer content-container"></div>
+
+        <div id="footerLayer" class="layer footer-content">
+            <h2 class="final-title">Acta de Votación</h2>
+            <p class="instruccion-resumen">Haz clic en los ítems rojos para corregir.</p>
+
+            <div id="resumenContainer" class="resumen-wrapper"></div>
+
+            <div class="footer-actions">
+                <p id="mensajeEstado" class="status-text">Validando votos...</p>
+                <div class="botones-finales">
+                    <button id="btnDescargarPDF" class="btn-elegant gold-border">📄 Descargar Cartilla</button>
+                    <button id="btnEnviar" class="btn-elegant disabled">Sellar y Enviar</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="celebrationOverlay" class="celebration-overlay">
+        <div class="celebration-content">
+            <h1>¡Gracias, <span id="celebrationName">Guerrero/a</span>!</h1>
+            <p>Tus votos han sido sellados y enviados.</p>
+            <p class="celebration-footer">✨ Prepárate para la ceremonia ✨</p>
+
+            <p id="msgFinalizar" class="click-instruction">👆 Haz click en la pantalla para finalizar</p>
+        </div>
+    </div>
+
+    <button id="btnVolverResumen" class="btn-flotante-volver" title="Volver al Resumen">⬇</button>
+
+    <audio id="audioFondo" loop>
+        <source src="grad.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="btnMusica" class="btn-flotante-musica" title="Activar Música">
+        🔇
+    </button>
+
+
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
