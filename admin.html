@@ -26,10 +26,6 @@
         .fila-ganador { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; }
         .nombre-ganador { font-weight: bold; color: #fff; }
         .conteo-votos { color: #888; }
-        
-        .badge-1 { color: #FFD700; } /* Oro */
-        .badge-2 { color: #C0C0C0; } /* Plata */
-        .badge-3 { color: #CD7F32; } /* Bronce */
     </style>
 </head>
 <body>
@@ -48,10 +44,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         
-        // IMPORTAMOS TUS PREGUNTAS (Para saber el orden y títulos correctos)
+        // IMPORTAMOS TUS PREGUNTAS
         import { SECCIONES } from './preguntas.js';
 
-        // 2. CONFIGURACIÓN (PEGAR TUS MISMAS CREDENCIALES DE APP.JS)
+        // 2. CONFIGURACIÓN (TUS CREDENCIALES)
         const firebaseConfig = {
             apiKey: "AIzaSyAiDpbCzZs-bokiEbEfAWaOQh6pFdfHL08",
             authDomain: "pcn-awards.firebaseapp.com",
@@ -65,32 +61,42 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 3. LÓGICA DE CONTEO
+        // =====================================================
+        // 3. GENERADOR DE IDs (¡ESTO FALTABA!)
+        // =====================================================
+        // Sin esto, la página no sabe que "La mejor guerrera" es "p1"
+        let contadorGlobal = 1;
+        SECCIONES.forEach(seccion => {
+            seccion.preguntas.forEach(pregunta => {
+                pregunta.id = `p${contadorGlobal}`;
+                contadorGlobal++;
+            });
+        });
+
+        // 4. LÓGICA DE CONTEO
         document.getElementById('btnContar').addEventListener('click', async () => {
             const status = document.getElementById('status');
             const container = document.getElementById('resultados');
             
-            status.innerText = "⏳ Descargando votos de la base de datos...";
+            status.innerText = "⏳ Descargando votos...";
             container.innerHTML = "";
 
             try {
-                // A) Descargar TODO de Firebase
+                // A) Descargar votos
                 const querySnapshot = await getDocs(collection(db, "votos"));
                 const totalVotantes = querySnapshot.size;
                 
                 status.innerText = `✅ Procesando ${totalVotantes} votos recibidos...`;
 
-                // B) Objeto para guardar el conteo
-                // Estructura: { p1: { "juan": 5, "pedro": 2 }, p2: ... }
+                // B) Contar
                 let conteoGlobal = {};
 
                 querySnapshot.forEach((doc) => {
                     const datos = doc.data();
-                    const respuestasUsuario = datos.respuestas; // { p1: "juan", p3: "pedro"... }
+                    const respuestasUsuario = datos.respuestas; 
 
-                    // Recorremos las respuestas de este usuario
                     for (const [idPregunta, valorOriginal] of Object.entries(respuestasUsuario)) {
-                        // Limpieza de texto: Minúsculas y sin espacios extra para que coincidan
+                        // Limpiamos (minusculas y espacios)
                         const nombreLimpio = valorOriginal.toLowerCase().trim();
 
                         if (!conteoGlobal[idPregunta]) conteoGlobal[idPregunta] = {};
@@ -103,9 +109,7 @@
                     }
                 });
 
-                // C) Generar el reporte visual
-                // Usamos SECCIONES para mantener el orden correcto (Docentes -> Vida Académica...)
-                
+                // C) Mostrar resultados
                 let htmlFinal = "";
 
                 SECCIONES.forEach(seccion => {
@@ -114,14 +118,17 @@
                     seccion.preguntas.forEach(preg => {
                         const votosDeEstaPregunta = conteoGlobal[preg.id] || {};
                         
-                        // Convertir objeto a array para ordenar: [ ["juan", 5], ["pedro", 2] ]
+                        // Ordenar ranking
                         const ranking = Object.entries(votosDeEstaPregunta)
-                            .sort((a, b) => b[1] - a[1]) // Ordenar de mayor a menor votos
-                            .slice(0, 5); // Top 5
+                            .sort((a, b) => b[1] - a[1]) 
+                            .slice(0, 5); 
 
                         htmlFinal += `
                             <div class="card-pregunta">
-                                <div class="titulo-pregunta">${preg.titulo} <span style="font-size:0.8rem; color:#666;">(ID: ${preg.id})</span></div>
+                                <div class="titulo-pregunta">
+                                    ${preg.titulo} 
+                                    <span style="font-size:0.8rem; color:#444;">(ID: ${preg.id})</span>
+                                </div>
                                 ${generarTablaRanking(ranking)}
                             </div>
                         `;
@@ -132,7 +139,7 @@
 
             } catch (error) {
                 console.error(error);
-                status.innerText = "❌ Error al descargar. Mira la consola (F12).";
+                status.innerText = "❌ Error: " + error.message;
             }
         });
 
@@ -141,9 +148,9 @@
             
             let html = "";
             rankingArray.forEach((item, index) => {
-                const nombre = item[0].toUpperCase(); // Volver a mayúsculas para mostrar
+                const nombre = item[0].toUpperCase(); 
                 const votos = item[1];
-                let icono = "";
+                let icono = "🔹";
                 if (index === 0) icono = "🥇";
                 if (index === 1) icono = "🥈";
                 if (index === 2) icono = "🥉";
