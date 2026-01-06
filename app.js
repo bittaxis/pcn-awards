@@ -25,61 +25,7 @@ const db = getFirestore(app);
 // ==========================================
 // 3. DATOS DE PREGUNTAS
 // ==========================================
-const SECCIONES = [
-    {
-        nombre: "Docentes y Ayudantes",
-        preguntas: [
-            { titulo: "La mejor guerrera versión docente" },
-            { titulo: "Peores PPTs de la historia" },
-            { titulo: "El Ayudante Legendario" },
-            { titulo: "Ayudante... ¿de verdad ayuda?" },
-            { titulo: "Premio 'Frase para el Bronce'" },
-            { titulo: "El Rey/Reina del 'Visto'" }
-        ]
-    },
-    {
-        nombre: "Vida Académica",
-        preguntas: [
-            { titulo: "Mejor Guerrero/a de la carrera" },
-            { titulo: "La Remontada Épica" },
-            { titulo: "Ramo Relleno" },
-            { titulo: "Ramo rompe-almas" },
-            { titulo: "Laboratorio del Terror" },
-            { titulo: "La Librería Ambulante" }
-        ]
-    },
-    {
-        nombre: "Personalidades del Grupo",
-        preguntas: [
-            { titulo: "Cerebro del grupo" },
-            { titulo: "Influencer del grupo" },
-            { titulo: "Drama King/Queen" },
-            { titulo: "Comediante Oficial" },
-            { titulo: "Estilo Impecable" },
-            { titulo: "El o la más Borracho/cha" },
-            { titulo: "Reloj Mal Ajustado" },
-            { titulo: "El Fantasma" },
-            { titulo: "Aprobó de Milagro" },
-            { titulo: "Dios del PowerPoint" },
-            { titulo: "Dúo o Trío Dinámico" },
-            { titulo: "La Mamá/Papá del Grupo" },
-            { titulo: "Premio 'Ya voy llegando'" },
-            { titulo: "La Risa del Año" }
-        ]
-    },
-    {
-        nombre: "Anécdotas y Memorias",
-        preguntas: [
-            { titulo: "Nicosas (Momentos Nico)" },
-            { titulo: "Peor actividad Explora" },
-            { titulo: "Salida memorable" },
-            { titulo: "La Disertación Eterna" },
-            { titulo: "La Crisis Colectiva" },
-            { titulo: "El Rojo Colectivo" }
-        ]
-    }
-];
-
+import { SECCIONES } from './preguntas.js';
 // GENERADOR DE IDs
 let contadorGlobal = 1;
 let TOTAL_PREGUNTAS = 0;
@@ -468,3 +414,4 @@ if(btnMusica && audio) {
         }
     }, { once: true });
 }
+
