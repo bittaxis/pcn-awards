@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Conteo - PCN Awards</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #111; color: #eee; font-family: 'Inter', sans-serif; padding: 40px; }
+        h1 { color: #d4af37; font-family: 'Playfair Display', serif; text-align: center; }
+        
+        .controls { text-align: center; margin-bottom: 40px; }
+        button {
+            padding: 15px 30px; font-size: 1.2rem; cursor: pointer;
+            background: #d4af37; border: none; font-weight: bold; border-radius: 5px;
+        }
+        button:hover { background: #fff; }
+
+        .resultados-container { max-width: 800px; margin: 0 auto; }
+        
+        .card-pregunta {
+            background: #222; border: 1px solid #444; border-radius: 10px;
+            margin-bottom: 30px; padding: 20px;
+        }
+        .titulo-pregunta { color: #d4af37; font-size: 1.3rem; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        
+        .fila-ganador { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; }
+        .nombre-ganador { font-weight: bold; color: #fff; }
+        .conteo-votos { color: #888; }
+        
+        .badge-1 { color: #FFD700; } /* Oro */
+        .badge-2 { color: #C0C0C0; } /* Plata */
+        .badge-3 { color: #CD7F32; } /* Bronce */
+    </style>
+</head>
+<body>
+
+    <h1>📊 CONTEO FINAL DE VOTOS</h1>
+    
+    <div class="controls">
+        <button id="btnContar">🔄 Cargar y Calcular Ganadores</button>
+        <p id="status" style="margin-top:10px; color:#888;">Esperando...</p>
+    </div>
+
+    <div id="resultados" class="resultados-container"></div>
+
+    <script type="module">
+        // 1. IMPORTACIONES
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        // IMPORTAMOS TUS PREGUNTAS (Para saber el orden y títulos correctos)
+        import { SECCIONES } from './preguntas.js';
+
+        // 2. CONFIGURACIÓN (PEGAR TUS MISMAS CREDENCIALES DE APP.JS)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAiDpbCzZs-bokiEbEfAWaOQh6pFdfHL08",
+            authDomain: "pcn-awards.firebaseapp.com",
+            projectId: "pcn-awards",
+            storageBucket: "pcn-awards.firebasestorage.app",
+            messagingSenderId: "672093795400",
+            appId: "1:672093795400:web:92fb1285e11742a17d947d",
+            measurementId: "G-WB7T3BE4BP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 3. LÓGICA DE CONTEO
+        document.getElementById('btnContar').addEventListener('click', async () => {
+            const status = document.getElementById('status');
+            const container = document.getElementById('resultados');
+            
+            status.innerText = "⏳ Descargando votos de la base de datos...";
+            container.innerHTML = "";
+
+            try {
+                // A) Descargar TODO de Firebase
+                const querySnapshot = await getDocs(collection(db, "votos"));
+                const totalVotantes = querySnapshot.size;
+                
+                status.innerText = `✅ Procesando ${totalVotantes} votos recibidos...`;
+
+                // B) Objeto para guardar el conteo
+                // Estructura: { p1: { "juan": 5, "pedro": 2 }, p2: ... }
+                let conteoGlobal = {};
+
+                querySnapshot.forEach((doc) => {
+                    const datos = doc.data();
+                    const respuestasUsuario = datos.respuestas; // { p1: "juan", p3: "pedro"... }
+
+                    // Recorremos las respuestas de este usuario
+                    for (const [idPregunta, valorOriginal] of Object.entries(respuestasUsuario)) {
+                        // Limpieza de texto: Minúsculas y sin espacios extra para que coincidan
+                        const nombreLimpio = valorOriginal.toLowerCase().trim();
+
+                        if (!conteoGlobal[idPregunta]) conteoGlobal[idPregunta] = {};
+                        
+                        if (conteoGlobal[idPregunta][nombreLimpio]) {
+                            conteoGlobal[idPregunta][nombreLimpio]++;
+                        } else {
+                            conteoGlobal[idPregunta][nombreLimpio] = 1;
+                        }
+                    }
+                });
+
+                // C) Generar el reporte visual
+                // Usamos SECCIONES para mantener el orden correcto (Docentes -> Vida Académica...)
+                
+                let htmlFinal = "";
+
+                SECCIONES.forEach(seccion => {
+                    htmlFinal += `<h2 style="color:#666; text-transform:uppercase; margin-top:40px; text-align:center;">${seccion.nombre}</h2>`;
+                    
+                    seccion.preguntas.forEach(preg => {
+                        const votosDeEstaPregunta = conteoGlobal[preg.id] || {};
+                        
+                        // Convertir objeto a array para ordenar: [ ["juan", 5], ["pedro", 2] ]
+                        const ranking = Object.entries(votosDeEstaPregunta)
+                            .sort((a, b) => b[1] - a[1]) // Ordenar de mayor a menor votos
+                            .slice(0, 5); // Top 5
+
+                        htmlFinal += `
+                            <div class="card-pregunta">
+                                <div class="titulo-pregunta">${preg.titulo} <span style="font-size:0.8rem; color:#666;">(ID: ${preg.id})</span></div>
+                                ${generarTablaRanking(ranking)}
+                            </div>
+                        `;
+                    });
+                });
+
+                container.innerHTML = htmlFinal;
+
+            } catch (error) {
+                console.error(error);
+                status.innerText = "❌ Error al descargar. Mira la consola (F12).";
+            }
+        });
+
+        function generarTablaRanking(rankingArray) {
+            if (rankingArray.length === 0) return "<div style='color:#555; font-style:italic;'>Sin votos aún</div>";
+            
+            let html = "";
+            rankingArray.forEach((item, index) => {
+                const nombre = item[0].toUpperCase(); // Volver a mayúsculas para mostrar
+                const votos = item[1];
+                let icono = "";
+                if (index === 0) icono = "🥇";
+                if (index === 1) icono = "🥈";
+                if (index === 2) icono = "🥉";
+
+                html += `
+                    <div class="fila-ganador">
+                        <span class="nombre-ganador">${icono} ${nombre}</span>
+                        <span class="conteo-votos">${votos} votos</span>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+    </script>
+</body>
+</html>
